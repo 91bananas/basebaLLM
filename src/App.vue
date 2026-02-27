@@ -225,6 +225,16 @@
                     class="mr-2"
                     @click="manualMode = !manualMode"
                   >{{ manualMode ? 'Manual ON' : 'Manual' }}</v-btn>
+                  <v-btn
+                    variant="tonal"
+                    size="small"
+                    class="mr-2"
+                    :disabled="undoStack.length === 0"
+                    @click="undo"
+                  >
+                    <v-icon start size="small">mdi-undo</v-icon>
+                    Undo
+                  </v-btn>
                   <v-btn color="primary" variant="tonal" size="small" class="mr-2" @click="openSaveDialog">Save</v-btn>
                 </v-toolbar>
                 <v-divider></v-divider>
@@ -470,6 +480,12 @@
       </v-card>
     </v-dialog>
 
+    <!-- Save toast -->
+    <v-snackbar v-model="saveToast" :timeout="2000" color="success" location="bottom">
+      <v-icon start>mdi-check-circle-outline</v-icon>
+      Schedule saved successfully
+    </v-snackbar>
+
   </v-app>
 </template>
 
@@ -519,9 +535,11 @@ export default {
       dragSrc: null,
       dragOverCell: null,
       dragPins: {},
+      undoStack: [],
       savedSchedules: [],
       showSaveDialog: false,
       saveName: '',
+      saveToast: false,
       activeScheduleId: null,
       manualMode: false,
       inactivePlayers: [],
@@ -641,6 +659,7 @@ export default {
       this.scheduleError = '';
       this.innings = [];
       this.dragPins = {};
+      this.undoStack = [];
       this.manualMode = false;
       const inactiveSet = new Set(this.inactivePlayers);
       const players = this.players.filter(p => !inactiveSet.has(p.name));
@@ -790,10 +809,16 @@ export default {
 
     // ── Saved schedules ────────────────────────────────────────────
     openSaveDialog() {
-      const active = this.activeScheduleId
-        ? this.savedSchedules.find(s => s.id === this.activeScheduleId)
-        : null;
-      this.saveName = active ? active.name : '';
+      if (this.activeScheduleId) {
+        // Existing schedule — save immediately without dialog
+        const existing = this.savedSchedules.find(s => s.id === this.activeScheduleId);
+        if (existing) {
+          this.saveName = existing.name;
+          this.confirmSave();
+          return;
+        }
+      }
+      this.saveName = '';
       this.showSaveDialog = true;
     },
     confirmSave() {
@@ -816,6 +841,7 @@ export default {
           };
           this.persistSavedSchedules();
           this.showSaveDialog = false;
+          this.saveToast = true;
           return;
         }
       }
@@ -835,6 +861,7 @@ export default {
       this.activeScheduleId = record.id;
       this.persistSavedSchedules();
       this.showSaveDialog = false;
+      this.saveToast = true;
     },
     loadSchedule(s) {
       this.innings = JSON.parse(JSON.stringify(s.innings));
@@ -861,6 +888,7 @@ export default {
         this.catcherSlots = slots.length ? slots : [{ player: '', innings: [] }];
       }
       this.dragPins = {};
+      this.undoStack = [];
       this.activeScheduleId = s.id;
       this.inactivePlayers = s.inactivePlayers ? [...s.inactivePlayers] : [];
     },
@@ -869,6 +897,7 @@ export default {
       this.scheduleError = '';
       this.activeScheduleId = null;
       this.dragPins = {};
+      this.undoStack = [];
       this.manualMode = false;
       this.inactivePlayers = [];
       this.pitcherSlots = [{ player: '', innings: [] }];
@@ -940,6 +969,9 @@ export default {
       if (src.innIdx !== innIdx) return;
       const playerName = this.getCellPlayer(innIdx, src.type, src.key);
       if (!playerName) return;
+
+      // Snapshot for undo before making changes
+      this.pushUndo();
 
       if (this.manualMode) {
         // Raw swap — no regen, no pins. Just exchange the two cell values directly.
@@ -1116,6 +1148,21 @@ export default {
       }
       this.innings = [...this.innings];
     },
+    // ── Undo ─────────────────────────────────────────────────────
+    pushUndo() {
+      this.undoStack.push({
+        innings: JSON.parse(JSON.stringify(this.innings)),
+        dragPins: JSON.parse(JSON.stringify(this.dragPins)),
+      });
+      // Cap the stack at 50 entries to avoid unbounded memory use
+      if (this.undoStack.length > 50) this.undoStack.splice(0, this.undoStack.length - 50);
+    },
+    undo() {
+      if (this.undoStack.length === 0) return;
+      const snapshot = this.undoStack.pop();
+      this.innings = snapshot.innings;
+      this.dragPins = snapshot.dragPins;
+    },
     // ── Persistence ─────────────────────────────────────────────
     saveData() {
       localStorage.setItem('players', JSON.stringify(this.players));
@@ -1157,6 +1204,24 @@ export default {
   },
   mounted() {
     this.loadData();
+    this._keyHandler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        if (this.innings.length > 0 && this.undoStack.length > 0 && this.page === 'home') {
+          e.preventDefault();
+          this.undo();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        if (this.innings.length > 0 && this.page === 'home') {
+          e.preventDefault();
+          this.openSaveDialog();
+        }
+      }
+    };
+    window.addEventListener('keydown', this._keyHandler);
+  },
+  beforeUnmount() {
+    if (this._keyHandler) window.removeEventListener('keydown', this._keyHandler);
   },
 };
 </script>
