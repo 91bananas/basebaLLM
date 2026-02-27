@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Defensive Baseball Scheduler</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.0.0-next.0/dist/vuetify.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.0.0-next.0/dist/vuetify.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-container>
+        <v-row>
+          <v-col cols="12">
+            <h1>Defensive Baseball Scheduler</h1>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <v-col cols="8">
+            <v-text-field
+              id="player-input"
+              v-model="newPlayer"
+              label="Enter player name"
+              outlined
+              dense
+              @keyup.enter="focusNumberInput"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="4">
+            <v-text-field
+              id="player-number"
+              v-model.number="newPlayerNumber"
+              label="Enter player number"
+              outlined
+              dense
+              type="number"
+              @keyup.enter="addPlayer"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <v-col cols="12">
+            <v-btn color="primary" @click="addPlayer">Add Player</v-btn>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <v-col cols="12">
+            <v-expansion-panels>
+              <v-expansion-panel>
+                <v-expansion-panel-title>Roster</v-expansion-panel-title>
+                <v-expansion-panel-text>
+                  <v-row>
+                    <v-col
+                      v-for="(player, index) in players"
+                      :key="index"
+                      cols="12"
+                      md="6"
+                    >
+                      <v-card>
+                        <v-card-title>
+                          <v-row>
+                            <v-col cols="8">
+                              <v-text-field
+                                v-if="player.isEditing"
+                                v-model="player.editName"
+                                label="Name"
+                                outlined
+                                dense
+                                @keyup.enter="savePlayer(index)"
+                              ></v-text-field>
+                              <span v-else>{{ player.name }}</span>
+                            </v-col>
+                            <v-col cols="4">
+                              <v-text-field
+                                v-if="player.isEditing"
+                                v-model.number="player.editNumber"
+                                label="Number"
+                                outlined
+                                dense
+                                type="number"
+                                @keyup.enter="savePlayer(index)"
+                              ></v-text-field>
+                              <span v-else>{{ player.number ? `#${player.number}` : '' }}</span>
+                            </v-col>
+                          </v-row>
+                        </v-card-title>
+                        <v-card-actions>
+                          <v-btn
+                            color="warning"
+                            small
+                            v-if="!player.isEditing"
+                            @click="editPlayer(index)"
+                          >
+                            Edit
+                          </v-btn>
+                          <v-btn
+                            color="success"
+                            small
+                            v-if="player.isEditing"
+                            @click="savePlayer(index)"
+                          >
+                            Save
+                          </v-btn>
+                          <v-btn
+                            color="error"
+                            small
+                            @click="removePlayer(index)"
+                          >
+                            Remove
+                          </v-btn>
+                        </v-card-actions>
+                        <v-card-text>
+                          <v-btn
+                            v-for="position in positions"
+                            :key="position"
+                            :color="player.positions[position] === 2 ? 'success' : player.positions[position] === 1 ? 'warning' : 'default'"
+                            small
+                            @click="togglePositionPriority(player, position)"
+                          >
+                            {{ position }}
+                          </v-btn>
+                        </v-card-text>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <v-col cols="12">
+            <v-btn color="success" @click="generateSchedule">Generate Schedule</v-btn>
+            <h2>Schedule</h2>
+            <v-list>
+              <v-list-item
+                v-for="(item, index) in schedule"
+                :key="index"
+              >
+                <v-list-item-content>
+                  {{ item.position }}: {{ item.player }}
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-app>
+  </div>
+</body>
+</html>
