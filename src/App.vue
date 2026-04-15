@@ -243,68 +243,87 @@
                   <thead>
                     <tr>
                       <th class="text-left font-weight-bold">Pos</th>
-                      <th v-for="inn in innings" :key="inn.number" class="text-center font-weight-bold">Inn {{ inn.number }}</th>
+                      <template v-for="(inn, innIdx) in innings" :key="`head-${inn.number}`">
+                        <th class="text-center font-weight-bold">Inn {{ inn.number }}</th>
+                        <th v-if="innIdx < innings.length - 1" class="text-center inning-pos-col">Pos</th>
+                      </template>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
                       <td class="font-weight-bold">P</td>
-                      <td v-for="(inn, innIdx) in innings" :key="inn.number"
+                      <template v-for="(inn, innIdx) in innings" :key="`p-${inn.number}`">
+                        <td
                           class="text-center drag-cell"
                           :class="{ 'drag-target': isDragOver(innIdx,'p',null) }"
                           @dragover.prevent="dragOverCell={innIdx,type:'p',key:null}"
                           @dragleave.self="dragOverCell=null"
-                          @drop.prevent="onDrop(innIdx,'p',null)">
-                        <span v-if="inn.pitcher" draggable="true" class="draggable-player"
-                              @dragstart.stop="dragSrc={innIdx,type:'p',key:null}">
-                          {{ displayName(inn.pitcher) }}
-                        </span>
-                      </td>
+                          @drop.prevent="onDrop(innIdx,'p',null)"
+                        >
+                          <span v-if="inn.pitcher" draggable="true" class="draggable-player"
+                                @dragstart.stop="dragSrc={innIdx,type:'p',key:null}">
+                            {{ displayName(inn.pitcher) }}
+                          </span>
+                        </td>
+                        <td v-if="innIdx < innings.length - 1" class="text-center inning-pos-col">P</td>
+                      </template>
                     </tr>
                     <tr>
                       <td class="font-weight-bold">C</td>
-                      <td v-for="(inn, innIdx) in innings" :key="inn.number"
+                      <template v-for="(inn, innIdx) in innings" :key="`c-${inn.number}`">
+                        <td
                           class="text-center drag-cell text-medium-emphasis"
                           :class="{ 'drag-target': isDragOver(innIdx,'c',null) }"
                           @dragover.prevent="dragOverCell={innIdx,type:'c',key:null}"
                           @dragleave.self="dragOverCell=null"
-                          @drop.prevent="onDrop(innIdx,'c',null)">
-                        <span v-if="inn.catcher" draggable="true" class="draggable-player"
-                              @dragstart.stop="dragSrc={innIdx,type:'c',key:null}">
-                          {{ displayName(inn.catcher) }}
-                        </span>
-                        <span v-else>—</span>
-                      </td>
+                          @drop.prevent="onDrop(innIdx,'c',null)"
+                        >
+                          <span v-if="inn.catcher" draggable="true" class="draggable-player"
+                                @dragstart.stop="dragSrc={innIdx,type:'c',key:null}">
+                            {{ displayName(inn.catcher) }}
+                          </span>
+                          <span v-else>—</span>
+                        </td>
+                        <td v-if="innIdx < innings.length - 1" class="text-center inning-pos-col">C</td>
+                      </template>
                     </tr>
                     <tr v-for="pos in autoFieldPositions" :key="pos">
                       <td class="font-weight-bold">{{ pos }}</td>
-                      <td v-for="(inn, innIdx) in innings" :key="inn.number"
+                      <template v-for="(inn, innIdx) in innings" :key="`${pos}-${inn.number}`">
+                        <td
                           class="text-center drag-cell"
                           :class="{ 'drag-target': isDragOver(innIdx,'pos',pos) }"
                           @dragover.prevent="dragOverCell={innIdx,type:'pos',key:pos}"
                           @dragleave.self="dragOverCell=null"
-                          @drop.prevent="onDrop(innIdx,'pos',pos)">
-                        <span v-if="inn.assignments[pos] && inn.assignments[pos] !== 'OPEN'"
-                              draggable="true" class="draggable-player"
-                              @dragstart.stop="dragSrc={innIdx,type:'pos',key:pos}">
-                          {{ displayName(inn.assignments[pos]) }}
-                        </span>
-                        <span v-else-if="inn.assignments[pos] === 'OPEN'" class="text-error font-weight-bold">OPEN</span>
-                      </td>
+                          @drop.prevent="onDrop(innIdx,'pos',pos)"
+                        >
+                          <span v-if="inn.assignments[pos] && inn.assignments[pos] !== 'OPEN'"
+                                draggable="true" class="draggable-player"
+                                @dragstart.stop="dragSrc={innIdx,type:'pos',key:pos}">
+                            {{ displayName(inn.assignments[pos]) }}
+                          </span>
+                          <span v-else-if="inn.assignments[pos] === 'OPEN'" class="text-error font-weight-bold">OPEN</span>
+                        </td>
+                        <td v-if="innIdx < innings.length - 1" class="text-center inning-pos-col">{{ pos }}</td>
+                      </template>
                     </tr>
                     <tr v-for="si in sitRowCount" :key="'sit'+si" style="background: rgba(0,0,0,0.04);">
                       <td class="font-weight-bold">{{ si === 1 ? 'Sit' : '' }}</td>
-                      <td v-for="(inn, innIdx) in innings" :key="inn.number"
+                      <template v-for="(inn, innIdx) in innings" :key="`sit-${si}-${inn.number}`">
+                        <td
                           class="text-center drag-cell"
                           :class="{ 'drag-target': isDragOver(innIdx,'sit',si-1) }"
                           @dragover.prevent="dragOverCell={innIdx,type:'sit',key:si-1}"
                           @dragleave.self="dragOverCell=null"
-                          @drop.prevent="onDrop(innIdx,'sit',si-1)">
-                        <span v-if="inn.sitting[si-1]" draggable="true" class="draggable-player text-medium-emphasis"
-                              @dragstart.stop="dragSrc={innIdx,type:'sit',key:si-1}">
-                          {{ displayName(inn.sitting[si - 1]) }}
-                        </span>
-                      </td>
+                          @drop.prevent="onDrop(innIdx,'sit',si-1)"
+                        >
+                          <span v-if="inn.sitting[si-1]" draggable="true" class="draggable-player text-medium-emphasis"
+                                @dragstart.stop="dragSrc={innIdx,type:'sit',key:si-1}">
+                            {{ displayName(inn.sitting[si - 1]) }}
+                          </span>
+                        </td>
+                        <td v-if="innIdx < innings.length - 1" class="text-center inning-pos-col">{{ si === 1 ? 'Sit' : '' }}</td>
+                      </template>
                     </tr>
                   </tbody>
                 </v-table>
@@ -596,6 +615,10 @@ export default {
     },
   },
   methods: {
+    getActivePlayers() {
+      const inactiveSet = new Set(this.inactivePlayers);
+      return this.players.filter(p => !inactiveSet.has(p.name));
+    },
     focusNumberInput() {
       this.$nextTick(() => { const el = document.getElementById('player-number'); if (el) el.focus(); });
     },
@@ -662,7 +685,7 @@ export default {
       this.undoStack = [];
       this.manualMode = false;
       const inactiveSet = new Set(this.inactivePlayers);
-      const players = this.players.filter(p => !inactiveSet.has(p.name));
+      const players = this.getActivePlayers();
       const N = players.length;
       const numInnings = Math.max(1, this.numInnings || 1);
       const leniency = this.leniency;
@@ -714,7 +737,7 @@ export default {
             return 0;
           });
           // Position-aware: don't bench someone if it strands a field position
-          const sitterNames = this.selectSitters(eligible, sitsPerInning, manuallyLocked);
+          const sitterNames = this.selectSitters(eligible, sitsPerInning, manuallyLocked, players);
           sitterMeta = sitterNames.map(name => {
             const s = eligible.find(x => x.name === name);
             return { idx: s.idx, name, prevLastSat: lastSatInning[s.idx] };
@@ -928,8 +951,8 @@ export default {
     // Walks candidates in fairness order; skips anyone whose benching would leave
     // any AUTO_FIELD_POSITION with zero qualified players (priority > 0) remaining.
     // Falls back to unconstrained selection if not enough sitters can be found.
-    selectSitters(eligible, needed, lockedNames) {
-      const players = this.players;
+    selectSitters(eligible, needed, lockedNames, playerPool) {
+      const players = playerPool || this.getActivePlayers();
       const chosen = new Set();
       // Pass 1: only pick sitters that don't strand any field position
       for (const cand of eligible) {
@@ -1022,8 +1045,10 @@ export default {
     },
     regenForward(fromInnIdx) {
       if (fromInnIdx >= this.innings.length) return;
-      const players = this.players;
+      const players = this.getActivePlayers();
+      const activeNames = new Set(players.map(p => p.name));
       const N = players.length;
+      if (N < 9) return;
       const numInnings = this.innings.length;
       const leniency = this.leniency;
       const rand = makePRNG(Date.now());
@@ -1053,13 +1078,17 @@ export default {
         const pinnedField = pins.field || {};
         const pinnedSitNames = pins.sit || [];
         // Pitcher/catcher: drag-pin > manual slot > algorithm
-        const manualPitcher = pinnedField['p'] || pitcherMap[innNum] || null;
-        const manualCatcher = pinnedField['c'] || catcherMap[innNum] || null;
+        const pinnedPitcher = activeNames.has(pinnedField['p']) ? pinnedField['p'] : null;
+        const pinnedCatcher = activeNames.has(pinnedField['c']) ? pinnedField['c'] : null;
+        const slottedPitcher = activeNames.has(pitcherMap[innNum]) ? pitcherMap[innNum] : null;
+        const slottedCatcher = activeNames.has(catcherMap[innNum]) ? catcherMap[innNum] : null;
+        const manualPitcher = pinnedPitcher || slottedPitcher || null;
+        const manualCatcher = pinnedCatcher || slottedCatcher || null;
         const manuallyLocked = new Set([manualPitcher, manualCatcher].filter(Boolean));
         // All players whose placement is forced (excluded from normal pool)
-        const allPinned = new Set([...Object.values(pinnedField), ...pinnedSitNames].filter(Boolean));
+        const allPinned = new Set([...Object.values(pinnedField), ...pinnedSitNames].filter(name => activeNames.has(name)));
         // Forced sitters (sit pins minus anyone locked to P/C)
-        const forcedSitters = pinnedSitNames.filter(n => !manuallyLocked.has(n));
+        const forcedSitters = pinnedSitNames.filter(n => activeNames.has(n) && !manuallyLocked.has(n));
         // --- Build sitter list: forced first, then algorithmic ---
         let sitting = [];
         let sitterMeta = [];
@@ -1084,7 +1113,7 @@ export default {
           });
           // lockedForCheck = P/C + forced sit pins already placed (they can't cover field positions)
           const lockedForCheck = new Set([...manuallyLocked, ...sitting]);
-          const moreSitterNames = this.selectSitters(eligible, remainingSits, lockedForCheck);
+          const moreSitterNames = this.selectSitters(eligible, remainingSits, lockedForCheck, players);
           for (const name of moreSitterNames) {
             const s = eligible.find(x => x.name === name);
             sitterMeta.push({ idx: s.idx, name, prevLastSat: lastSatInning[s.idx] });
@@ -1107,7 +1136,7 @@ export default {
         const assignments = {};
         for (const [pos, name] of Object.entries(pinnedField)) {
           if (pos === 'p' || pos === 'c') continue;
-          if (!sittingSet.has(name) && !usedPlayers.has(name)) {
+          if (activeNames.has(name) && !sittingSet.has(name) && !usedPlayers.has(name)) {
             assignments[pos] = name;
             usedPlayers.add(name);
           }
@@ -1248,6 +1277,13 @@ export default {
   background: rgba(var(--v-theme-primary), 0.18) !important;
   outline: 2px dashed rgba(var(--v-theme-primary), 0.6);
   outline-offset: -2px;
+}
+.inning-pos-col {
+  color: rgba(128, 128, 128, 0.42);
+  font-size: 0.72rem;
+  font-weight: 500;
+  min-width: 44px;
+  white-space: nowrap;
 }
 </style>
 
