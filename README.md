@@ -1,6 +1,10 @@
+[DEMO](https://91bananas.github.io/basebaLLM/)
+
 # BasebaLLM — Defensive Baseball Scheduler
 
 A web-based tool for generating and managing defensive baseball game schedules. Built with Vue 3 + Vuetify 3 + Vite.
+
+Build your roster by setting up the players, which positions you like them in or don't. Then generate game lineups where you lock in a pitcher and catcher for a number of innings, the algorithm will figure everything else out. All players should sit in order without sitting twice, if it doesn't work out you can manually adjust the rotation by dragging and dropping players within a given inning and the algorithm will readjust the rotation automatically, or. In "MANUAL" mode indicated by the orange button, the algorithm will not continue to adjust, it will just take your inputs via drag/drop.
 
 ## Features
 
